@@ -17,6 +17,8 @@
   let showImportModal: boolean = false;
   let showTextInput: boolean = false;
   let showCopiedAlert: boolean = false;
+  let showAddParticipantModal: boolean = false;
+  let newParticipantName: string = '';
 
   // Computed properties
   $: filteredParticipants = participants
@@ -54,6 +56,21 @@
     
     participants = newParticipants;
     closeImportModal();
+  }
+
+  // Add a single participant
+  function addSingleParticipant(): void {
+    if (newParticipantName.trim() === '') return;
+    
+    const newParticipant: Participant = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newParticipantName.trim(),
+      checkedIn: false
+    };
+    
+    participants = [...participants, newParticipant];
+    newParticipantName = '';
+    showAddParticipantModal = false;
   }
 
   // Import from clipboard
@@ -104,8 +121,23 @@
   function clearSearch(): void {
     searchText = '';
   }
+
+  // Load data from localStorage on mount
+  onMount(() => {
+    const savedParticipants = localStorage.getItem('tournament-participants');
+    if (savedParticipants) {
+      participants = JSON.parse(savedParticipants);
+    }
+  });
+  
+  // Save data whenever participants change
+  $: {
+    if (participants.length > 0) {
+      localStorage.setItem('tournament-participants', JSON.stringify(participants));
+    }
+  }
 </script>
-<main>
+
 <div class="flex flex-col h-screen bg-gray-50">
   <!-- Header -->
   <header class="bg-white shadow-sm p-4">
@@ -147,6 +179,19 @@
             </button>
           {/if}
         </div>
+      </div>
+
+      <!-- Add Participant Button (New) -->
+      <div class="mb-4">
+        <button
+          on:click={() => showAddParticipantModal = true}
+          class="w-full px-4 py-2 bg-green-600 text-white rounded-md flex items-center justify-center text-sm"
+        >
+          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Participant
+        </button>
       </div>
 
       <!-- Toggle View -->
@@ -230,15 +275,26 @@
         </div>
         <h2 class="text-xl font-medium text-gray-900 mb-2">No participants yet</h2>
         <p class="text-gray-500 mb-6">Import your participant list to get started</p>
-        <button
-          on:click={() => showImportModal = true}
-          class="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center"
-        >
-          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-          </svg>
-          Import Participants
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            on:click={() => showImportModal = true}
+            class="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center justify-center"
+          >
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Import Participants
+          </button>
+          <button
+            on:click={() => showAddParticipantModal = true}
+            class="px-4 py-2 bg-green-600 text-white rounded-md flex items-center justify-center"
+          >
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Add Participant
+          </button>
+        </div>
       </div>
     {/if}
   </main>
@@ -246,16 +302,18 @@
   <!-- Footer -->
   {#if participants.length > 0}
     <footer class="bg-white border-t border-gray-200 p-4">
-      <div class="container mx-auto flex justify-between items-center">
-        <button
-          on:click={() => showImportModal = true}
-          class="px-4 py-2 border border-gray-300 rounded-md flex items-center text-sm"
-        >
-          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-          </svg>
-          Import
-        </button>
+      <div class="container mx-auto flex justify-between items-center flex-wrap gap-2">
+        <div class="flex gap-2">
+          <button
+            on:click={() => showImportModal = true}
+            class="px-4 py-2 border border-gray-300 rounded-md flex items-center text-sm"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            New Import
+          </button>
+        </div>
         
         <button
           on:click={copyCheckedInToClipboard}
@@ -294,7 +352,7 @@
 
   <!-- Import Modal -->
   {#if showImportModal}
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         {#if showTextInput}
           <div class="p-6">
@@ -371,11 +429,58 @@
     </div>
   {/if}
 
+  <!-- Add Participant Modal (New) -->
+  {#if showAddParticipantModal}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Add New Participant
+          </h3>
+          <form on:submit|preventDefault={addSingleParticipant}>
+            <div class="mb-4">
+              <label for="participantName" class="block text-sm font-medium text-gray-700 mb-1">
+                Participant Name
+              </label>
+              <input
+                id="participantName"
+                type="text"
+                class="w-full border border-gray-300 rounded-md p-2"
+                placeholder="Enter participant name"
+                bind:value={newParticipantName}
+                required
+                autofocus
+              />
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                on:click={() => {
+                  showAddParticipantModal = false;
+                  newParticipantName = '';
+                }}
+                class="px-4 py-2 border border-gray-300 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-green-600 text-white rounded-md"
+                disabled={!newParticipantName.trim()}
+              >
+                Add
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Copied Alert -->
   {#if showCopiedAlert}
-    <div class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg">
+    <div class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50">
       Participant list copied to clipboard!
     </div>
   {/if}
 </div>
-</main>
